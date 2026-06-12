@@ -18,8 +18,6 @@ def main():
             query: str = input("Search: ")
             client.get_lyrics(query, flags=args[0:])
         else:
-            if not client.flag_check(args[1:]):
-                return
             client.get_lyrics(args[0], flags=args[1:])
     else:
         query: str = input("Search: ")

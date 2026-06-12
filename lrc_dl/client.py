@@ -5,7 +5,7 @@ import os
 class Client:
     """lrc downloader client powered by lrclib"""
 
-    eligible_flags = ["--c. --current, -m, --manual"]
+    eligible_flags = ["--c. --current, -m, --manual", "--no-download"]
     extensions = (".opus", ".mp3", ".wav")
 
     def __init__(self) -> None:
@@ -52,11 +52,14 @@ class Client:
                 if allFiles[file].endswith(self.extensions):
                     fileName: str = self.remove_ext(allFiles[file])["fileName"]
                     print(f"Found {fileName} in {path}")
-                    self.get_lyrics(fileName, flags)
                     audioFiles.append(fileName)
+                    if "--no-download" not in flags:
+                        lyrics = self.get_lyrics(fileName, flags)
+                        self.write_lrc(fileName, path, lyrics)
                 elif os.path.isdir(allFiles[file]):
                     folders.append(allFiles[file])
             """Check current flags"""
+            """Recursively checks each folder in current directory"""
             if ("-c" or "--current") not in flags:
                 for folder in folders:
                     self.scan_folder(folder, flags=flags)
@@ -100,7 +103,8 @@ class Client:
                         print(e)
                         return "No valid lyrics"
                 else:
-                    return str(data[0].get("syncedLyrics"))
+                    print("test")
+                    return data[0]["syncedLyrics"]
         except Exception as e:
             print(f"Error: {e}")
             return ""
@@ -114,28 +118,26 @@ class Client:
 
     """Writes lyrics to an lrc file"""
 
-    def write_lrc(self, file: str, path: str = ".", lyrics: str = "") -> None:
-        fileName = f"{file}.lrc"
+    def write_lrc(self, songName: str, path: str = ".", lyrics: str = "") -> None:
+        fileName = f"{songName}.lrc"
         try:
-            filePath: str = path + fileName
-            os.remove(filePath)
+            filePath: str = f"{path}/{fileName}"
+            print(filePath)
+            # os.remove(filePath)
             with open(filePath, "x") as f:
                 f.write(f"{lyrics}\n")
-        except Exception:
-            with open(fileName, "x") as f:
-                f.write(f"{lyrics}\n")
+        except Exception as e:
+            print(f"Error: {e}")
 
     """"Checks vaidity of flags"""
 
     def flag_check(self, flags: list = []):
-        print("testing")
         check = True
         for flag in flags:
-            for compare in self.eligible_flags:
-                if flag != compare:
-                    print("Error: non-valid flag")
-                    check = False
-                    return check
+            if flag not in self.eligible_flags:
+                print(f"Error: non-valid flag '{flag}'")
+                check = False
+                return check
         return check
 
     def __repr__(self) -> str:
